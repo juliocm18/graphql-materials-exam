@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",             // Transpila el código para ES2020.
+    "module": "CommonJS",          // Usa CommonJS, el formato por defecto en Node.js.
+    "rootDir": "src",              // Define la carpeta de origen de tus archivos TypeScript.
+    "outDir": "dist",              // Carpeta de salida para los archivos JavaScript.
+    //"strict": true,                // Habilita todas las comprobaciones estrictas de TypeScript.
+    "esModuleInterop": true,       // Habilita la interoperabilidad entre CommonJS y ESM.
+    "skipLibCheck": true,          // Omite la comprobación de tipos en los archivos de definición (mejora la velocidad).
+    "forceConsistentCasingInFileNames": true, // Asegura consistencia en mayúsculas y minúsculas.
+    "experimentalDecorators": true, // Habilita el soporte para decoradores
+    "emitDecoratorMetadata": true,  // (Opcional) Genera metadatos para los decoradores
+    "resolveJsonModule": true, //permite importar archivos JSON directamente como módulos en tu proyecto. 
+    "noImplicitAny": false,        // Permite usar `any` implícitamente.
+  },
+  "include": ["src/**/*.ts"],       // Incluye todos los archivos `.ts` dentro de la carpeta `src`.
+  "exclude": ["node_modules", "dist", "src/migrations"],       // Excluye la carpeta `node_modules`.
+}
+
