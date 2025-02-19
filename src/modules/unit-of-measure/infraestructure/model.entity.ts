@@ -5,9 +5,11 @@ import {Field, ObjectType} from "type-graphql";
 @Entity()
 @ObjectType()
 export class UnitOfMeasure {
+  @Field()
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
+  @Field()
   @Column({unique: true})
   name: string;
 

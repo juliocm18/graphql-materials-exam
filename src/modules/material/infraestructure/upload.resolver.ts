@@ -14,52 +14,56 @@ export class UploadResolver {
     const {createReadStream} = file;
     const stream = createReadStream();
 
-    const parser = parse({
-      delimiter: ",",
-      columns: true,
-    });
+    const parser = parse({delimiter: ",", columns: true});
 
-    stream.pipe(parser);
     const materialRepository =
       DatabaseBootstrap.dataSource.getRepository(Material);
-
     const manufacturerRepository =
       DatabaseBootstrap.dataSource.getRepository(Manufacturer);
-
     const categoryRepository =
       DatabaseBootstrap.dataSource.getRepository(Category);
-
     const unitOfMeasureRepository =
       DatabaseBootstrap.dataSource.getRepository(UnitOfMeasure);
 
-    for await (const record of parser) {
-      let manufacturer = await manufacturerRepository.findOne({
-        where: {name: record.manufacturer_name},
-      });
-      let category = await categoryRepository.findOne({
-        where: {name: record.category},
-      });
-      let unitOfMeasure = await unitOfMeasureRepository.findOne({
-        where: {name: record.unit_of_measure},
-      });
+    const materials: any[] = [];
+    const manufacturersMap = new Map<string, Manufacturer>();
+    const categoriesMap = new Map<string, Category>();
+    const unitOfMeasuresMap = new Map<string, UnitOfMeasure>();
 
+    // Obtener todos los fabricantes, categorías y unidades de medida existentes
+    const existingManufacturers = await manufacturerRepository.find();
+    const existingCategories = await categoryRepository.find();
+    const existingUnitsOfMeasure = await unitOfMeasureRepository.find();
+
+    existingManufacturers.forEach((m) => manufacturersMap.set(m.name, m));
+    existingCategories.forEach((c) => categoriesMap.set(c.name, c));
+    existingUnitsOfMeasure.forEach((u) => unitOfMeasuresMap.set(u.name, u));
+
+    // Procesar el CSV usando streams
+    for await (const record of stream.pipe(parser)) {
+      let manufacturer = manufacturersMap.get(record.manufacturer_name);
       if (!manufacturer) {
-        manufacturer = await manufacturerRepository.save({
+        manufacturer = manufacturerRepository.create({
           name: record.manufacturer_name,
         });
+        manufacturersMap.set(record.manufacturer_name, manufacturer);
       }
 
+      let category = categoriesMap.get(record.category);
       if (!category) {
-        category = await categoryRepository.save({name: record.category});
+        category = categoryRepository.create({name: record.category});
+        categoriesMap.set(record.category, category);
       }
 
+      let unitOfMeasure = unitOfMeasuresMap.get(record.unit_of_measure);
       if (!unitOfMeasure) {
-        unitOfMeasure = await unitOfMeasureRepository.save({
+        unitOfMeasure = unitOfMeasureRepository.create({
           name: record.unit_of_measure,
         });
+        unitOfMeasuresMap.set(record.unit_of_measure, unitOfMeasure);
       }
 
-      const material = await materialRepository.save({
+      materials.push({
         name: record.name,
         description: record.description,
         long_description: record.long_description,
@@ -75,8 +79,52 @@ export class UploadResolver {
         requested_quantity: parseFloat(record.requested_quantity) || null,
         requested_unit_price: parseFloat(record.requested_unit_price) || null,
       });
+
+      // Insertar en lotes de 1000 registros
+      if (materials.length >= 1000) {
+        await this.saveBatch(materialRepository, materials);
+        materials.length = 0; // Limpiar el array después de la inserción
+      }
     }
 
+    // Guardar los registros restantes
+    if (materials.length > 0) {
+      await this.saveBatch(materialRepository, materials);
+    }
+
+    // Guardar fabricantes, categorías y unidades de medida nuevas en la base de datos
+    await this.saveNewEntities(
+      manufacturerRepository,
+      manufacturersMap,
+      existingManufacturers
+    );
+    await this.saveNewEntities(
+      categoryRepository,
+      categoriesMap,
+      existingCategories
+    );
+    await this.saveNewEntities(
+      unitOfMeasureRepository,
+      unitOfMeasuresMap,
+      existingUnitsOfMeasure
+    );
+
     return true;
+  }
+
+  // Función para insertar en batch
+  private async saveBatch(repository, batch) {
+    await repository.insert(batch);
+  }
+
+  // Guardar solo los nuevos elementos en la base de datos
+  private async saveNewEntities(repository, map, existingEntities) {
+    const newEntities = Array.from(map.values()).filter(
+      (entity: any) =>
+        !existingEntities.some((e: any) => e.name === entity.name)
+    );
+    if (newEntities.length > 0) {
+      await repository.insert(newEntities);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import {Resolver, Query, Mutation, Arg, Int} from "type-graphql";
+import {Resolver, Query, Mutation, Arg, Int, Float} from "type-graphql";
 import {Material} from "./model.entity";
 import {Manufacturer} from "../../manufacturer/infraestructure/model.entity";
 import {Category} from "../../category/infraestructure/model.entity";
@@ -35,9 +35,11 @@ export class MaterialResolver {
     @Arg("competitor_part_id", {nullable: true}) competitor_part_id: string,
     @Arg("category_id") category_id: string,
     @Arg("unit_of_measure_id") unit_of_measure_id: string,
-    @Arg("unit_quantity", {nullable: true}) unit_quantity: number,
-    @Arg("requested_quantity", {nullable: true}) requested_quantity: number,
-    @Arg("requested_unit_price", {nullable: true}) requested_unit_price: number
+    @Arg("unit_quantity", () => Float, {nullable: true}) unit_quantity?: number,
+    @Arg("requested_quantity", () => Float, {nullable: true})
+    requested_quantity?: number,
+    @Arg("requested_unit_price", () => Float, {nullable: true})
+    requested_unit_price?: number
   ) {
     const materialRepository =
       DatabaseBootstrap.dataSource.getRepository(Material);

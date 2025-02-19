@@ -2,9 +2,7 @@ import {ApolloServer} from "@apollo/server";
 import {expressMiddleware} from "@apollo/server/express4";
 import {buildSchema} from "type-graphql";
 import {graphqlUploadExpress, GraphQLUpload} from "graphql-upload-minimal";
-
 import {GraphQLScalarType} from "graphql";
-
 import {MaterialResolver} from "./modules/material/infraestructure/resolver";
 import {ManufacturerResolver} from "./modules/manufacturer/infraestructure/resolver";
 import {CategoryResolver} from "./modules/category/infraestructure/resolver";
@@ -15,10 +13,8 @@ import {ApolloServerPluginDrainHttpServer} from "@apollo/server/plugin/drainHttp
 import http from "http";
 import cors from "cors";
 import express from "express";
-interface MyContext {
-  req: express.Request;
-  res: express.Response;
-}
+import {AppService} from "./core/config/app.config.service";
+
 async function bootstrap() {
   const database = new DatabaseBootstrap();
   await database.initialize();
@@ -46,21 +42,19 @@ async function bootstrap() {
 
   await server.start();
 
-  // 🚀 Middleware para manejar archivos y JSON
   app.use(graphqlUploadExpress({maxFileSize: 5 * 1024 * 1024, maxFiles: 1})); // 5MB máx.
   app.use(cors<cors.CorsRequest>());
   app.use(express.json());
   app.use(express.urlencoded({extended: true}));
 
-  // **Falta montar expressMiddleware para Apollo**
   app.use(
     "/graphql",
     expressMiddleware(server) as unknown as express.RequestHandler
   );
   await new Promise<void>((resolve) =>
-    httpServer.listen({port: 4000}, resolve)
+    httpServer.listen({port: AppService.PORT}, resolve)
   );
-  console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+  console.log(`🚀 Server ready at http://localhost:${AppService.PORT}/graphql`);
 }
 
 bootstrap();
