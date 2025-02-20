@@ -33,10 +33,10 @@ export class Material {
   @Column({nullable: true})
   customer_part_id: string;
 
-  @Field(() => Manufacturer)
-  @ManyToOne(() => Manufacturer)
+  @Field(() => Manufacturer, {nullable: true})
+  @ManyToOne(() => Manufacturer, {nullable: true})
   @JoinColumn({name: "manufacturer_id"})
-  manufacturer: Manufacturer;
+  manufacturer?: Manufacturer;
 
   @Field()
   @Column({nullable: true})
@@ -54,15 +54,15 @@ export class Material {
   @Column({nullable: true})
   competitor_part_id: string;
 
-  @Field(() => Category)
-  @ManyToOne(() => Category)
+  @Field(() => Category, {nullable: true})
+  @ManyToOne(() => Category, {nullable: true})
   @JoinColumn({name: "category_id"})
-  category: Category;
+  category?: Category;
 
-  @Field(() => UnitOfMeasure)
-  @ManyToOne(() => UnitOfMeasure)
+  @Field(() => UnitOfMeasure, {nullable: true})
+  @ManyToOne(() => UnitOfMeasure, {nullable: true})
   @JoinColumn({name: "unit_of_measure_id"})
-  unit_of_measure: UnitOfMeasure;
+  unit_of_measure?: UnitOfMeasure;
 
   @Field()
   @Column({type: "float", nullable: true})

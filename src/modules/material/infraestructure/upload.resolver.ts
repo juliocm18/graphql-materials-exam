@@ -13,7 +13,6 @@ export class UploadResolver {
   async uploadMaterials(@Arg("file", () => GraphQLUpload) file: any) {
     const {createReadStream} = file;
     const stream = createReadStream();
-
     const parser = parse({delimiter: ",", columns: true});
 
     const materialRepository =
@@ -30,7 +29,7 @@ export class UploadResolver {
     const categoriesMap = new Map<string, Category>();
     const unitOfMeasuresMap = new Map<string, UnitOfMeasure>();
 
-    // Obtener todos los fabricantes, categorías y unidades de medida existentes
+    // Cargar las entidades existentes
     const existingManufacturers = await manufacturerRepository.find();
     const existingCategories = await categoryRepository.find();
     const existingUnitsOfMeasure = await unitOfMeasureRepository.find();
@@ -39,19 +38,20 @@ export class UploadResolver {
     existingCategories.forEach((c) => categoriesMap.set(c.name, c));
     existingUnitsOfMeasure.forEach((u) => unitOfMeasuresMap.set(u.name, u));
 
-    // Procesar el CSV usando streams
     for await (const record of stream.pipe(parser)) {
       let manufacturer = manufacturersMap.get(record.manufacturer_name);
       if (!manufacturer) {
         manufacturer = manufacturerRepository.create({
           name: record.manufacturer_name,
         });
+        manufacturer = await manufacturerRepository.save(manufacturer); // Guardamos y obtenemos el ID
         manufacturersMap.set(record.manufacturer_name, manufacturer);
       }
 
       let category = categoriesMap.get(record.category);
       if (!category) {
         category = categoryRepository.create({name: record.category});
+        category = await categoryRepository.save(category);
         categoriesMap.set(record.category, category);
       }
 
@@ -60,6 +60,7 @@ export class UploadResolver {
         unitOfMeasure = unitOfMeasureRepository.create({
           name: record.unit_of_measure,
         });
+        unitOfMeasure = await unitOfMeasureRepository.save(unitOfMeasure);
         unitOfMeasuresMap.set(record.unit_of_measure, unitOfMeasure);
       }
 
@@ -68,13 +69,13 @@ export class UploadResolver {
         description: record.description,
         long_description: record.long_description,
         customer_part_id: record.customer_part_id,
-        manufacturer,
+        manufacturer, // Pasamos la entidad con su ID
         manufacturer_part_id: record.manufacturer_part_id,
         competitor_name: record.competitor_name,
         competitor_part_name: record.competitor_part_name,
         competitor_part_id: record.competitor_part_id,
-        category,
-        unit_of_measure: unitOfMeasure,
+        category, // Pasamos la entidad con su ID
+        unit_of_measure: unitOfMeasure, // Pasamos la entidad con su ID
         unit_quantity: parseFloat(record.unit_quantity) || null,
         requested_quantity: parseFloat(record.requested_quantity) || null,
         requested_unit_price: parseFloat(record.requested_unit_price) || null,
@@ -82,49 +83,16 @@ export class UploadResolver {
 
       // Insertar en lotes de 1000 registros
       if (materials.length >= 1000) {
-        await this.saveBatch(materialRepository, materials);
+        await materialRepository.insert(materials);
         materials.length = 0; // Limpiar el array después de la inserción
       }
     }
 
-    // Guardar los registros restantes
+    // Guardar los materiales restantes
     if (materials.length > 0) {
-      await this.saveBatch(materialRepository, materials);
+      await materialRepository.insert(materials);
     }
-
-    // Guardar fabricantes, categorías y unidades de medida nuevas en la base de datos
-    await this.saveNewEntities(
-      manufacturerRepository,
-      manufacturersMap,
-      existingManufacturers
-    );
-    await this.saveNewEntities(
-      categoryRepository,
-      categoriesMap,
-      existingCategories
-    );
-    await this.saveNewEntities(
-      unitOfMeasureRepository,
-      unitOfMeasuresMap,
-      existingUnitsOfMeasure
-    );
 
     return true;
-  }
-
-  // Función para insertar en batch
-  private async saveBatch(repository, batch) {
-    await repository.insert(batch);
-  }
-
-  // Guardar solo los nuevos elementos en la base de datos
-  private async saveNewEntities(repository, map, existingEntities) {
-    const newEntities = Array.from(map.values()).filter(
-      (entity: any) =>
-        !existingEntities.some((e: any) => e.name === entity.name)
-    );
-    if (newEntities.length > 0) {
-      await repository.insert(newEntities);
-    }
   }
 }

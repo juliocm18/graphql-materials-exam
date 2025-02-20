@@ -13,6 +13,8 @@ export class CategoryResolver {
     const response = await repository.find({
       skip: +page * +pageSize,
       take: +pageSize,
+      relations: ["materials"],
+      order: {name: "ASC"},
     });
     return response;
   }

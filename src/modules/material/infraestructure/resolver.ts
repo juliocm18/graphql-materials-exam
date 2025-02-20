@@ -4,19 +4,26 @@ import {Manufacturer} from "../../manufacturer/infraestructure/model.entity";
 import {Category} from "../../category/infraestructure/model.entity";
 import {UnitOfMeasure} from "../../unit-of-measure/infraestructure/model.entity";
 import DatabaseBootstrap from "../../../core/bootstrap/database.bootstrap";
+import {ILike} from "typeorm";
 
 @Resolver()
 export class MaterialResolver {
   @Query(() => [Material])
   async materials(
     @Arg("page", {defaultValue: 0}) page: string,
-    @Arg("pageSize", {defaultValue: 10}) pageSize: string
+    @Arg("pageSize", {defaultValue: 10}) pageSize: string,
+    @Arg("manufacturerName", {nullable: true}) manufacturerName?: string
   ) {
     const repository = DatabaseBootstrap.dataSource.getRepository(Material);
 
+    const whereClause = manufacturerName
+      ? {manufacturer: {name: ILike(`%${manufacturerName}%`)}}
+      : {};
+    //console.log(whereClause);
     const response = await repository.find({
       skip: +page * +pageSize,
       take: +pageSize,
+      where: whereClause,
       relations: ["manufacturer", "category", "unit_of_measure"],
     });
     return response;
