@@ -1,4 +1,4 @@
-import {Resolver, Query, Mutation, Arg, Int} from "type-graphql";
+import {Resolver, Query, Mutation, Arg} from "type-graphql";
 import {Category} from "./model.entity";
 import DatabaseBootstrap from "../../../core/bootstrap/database.bootstrap";
 

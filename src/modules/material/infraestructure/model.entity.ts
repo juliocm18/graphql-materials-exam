@@ -31,7 +31,7 @@ export class Material {
 
   @Field()
   @Column({nullable: true})
-  customer_part_id: string;
+  customer_part_id: string; // foreign table customer part
 
   @Field(() => Manufacturer, {nullable: true})
   @ManyToOne(() => Manufacturer, {nullable: true})
@@ -40,19 +40,19 @@ export class Material {
 
   @Field()
   @Column({nullable: true})
-  manufacturer_part_id: string;
+  manufacturer_part_id: string; // foreign table manufacturer part
 
   @Field()
   @Column({nullable: true})
-  competitor_name: string;
+  competitor_name: string; // foreign table competitor
 
   @Field()
   @Column({nullable: true})
-  competitor_part_name: string;
+  competitor_part_name: string; // foreign table competitor part
 
   @Field()
   @Column({nullable: true})
-  competitor_part_id: string;
+  competitor_part_id: string; // foreign table competitor part
 
   @Field(() => Category, {nullable: true})
   @ManyToOne(() => Category, {nullable: true})
