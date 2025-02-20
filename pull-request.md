@@ -1,8 +1,8 @@
-> The PR title should be the same as the first line ({fix|refactor|feat}: Verusen ......)
+> The PR title should be the same as the first line ({fix|refactor|feat}: JB ......)
 
 > The { } characters represents variables
 
-# {feat | fix | hotfix | refactor}: Verusen-{issue’s-id} {issue’s title}
+# {feat | fix | hotfix | refactor}: JB-{issue’s-id} {issue’s title}
 
 ## Changes:
 
@@ -22,4 +22,4 @@
 
 ## Link to Jira Issue
 
-[Verusen-{issue’s-id}](url)
+[JB-{issue’s-id}](url)
